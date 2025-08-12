@@ -43,6 +43,31 @@ const verseSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  // Store original commentaries for reference
+  commentaries: {
+    tej: Object,
+    siva: Object,
+    purohit: Object,
+    chinmay: Object,
+    san: Object,
+    adi: Object,
+    gambir: Object,
+    madhav: Object,
+    anand: Object,
+    rams: Object,
+    raman: Object,
+    abhinav: Object,
+    sankar: Object,
+    jaya: Object,
+    vallabh: Object,
+    ms: Object,
+    srid: Object,
+    dhan: Object,
+    venkat: Object,
+    puru: Object,
+    neel: Object,
+    prabhu: Object
   }
 }, {
   timestamps: true,

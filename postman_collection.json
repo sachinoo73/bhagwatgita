@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "Bhagwat Gita API",
+    "description": "Complete API collection for the Bhagwat Gita verses management system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "verseId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the server is running and healthy"
+      }
+    },
+    {
+      "name": "Get All Verses",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses?page=1&limit=10&chapter=1&search=krishna&tags=devotion",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number for pagination"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of items per page"
+            },
+            {
+              "key": "chapter",
+              "value": "1",
+              "description": "Filter by chapter number (1-18)"
+            },
+            {
+              "key": "search",
+              "value": "krishna",
+              "description": "Search in sanskrit, transliteration, translation, or meaning"
+            },
+            {
+              "key": "tags",
+              "value": "devotion",
+              "description": "Filter by tags (comma-separated)"
+            }
+          ]
+        },
+        "description": "Get all verses with optional pagination, filtering, and search"
+      }
+    },
+    {
+      "name": "Get Verse by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/{{verseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "{{verseId}}"]
+        },
+        "description": "Get a specific verse by its MongoDB ObjectId"
+      }
+    },
+    {
+      "name": "Get Verses by Chapter",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/chapter/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "chapter", "1"]
+        },
+        "description": "Get all verses from a specific chapter (1-18)"
+      }
+    },
+    {
+      "name": "Get Verse by Chapter and Verse Number",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/1/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "1", "1"]
+        },
+        "description": "Get a specific verse by chapter and verse number (simplified format)"
+      }
+    },
+    {
+      "name": "Get Verse with Full Commentaries",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/1/1/full",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "1", "1", "full"]
+        },
+        "description": "Get a specific verse with all commentary data (full format)"
+      }
+    },
+    {
+      "name": "Create New Verse",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chapter\": 1,\n  \"verse\": 1,\n  \"sanskrit\": \"धृतराष्ट्र उवाच | धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः | मामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय ||\",\n  \"transliteration\": \"dhṛtarāṣṭra uvāca dharma-kṣetre kuru-kṣetre samavetā yuyutsavaḥ māmakāḥ pāṇḍavāś caiva kim akurvata sañjaya\",\n  \"translation\": \"Dhritarashtra said: O Sanjaya, what did my sons and the sons of Pandu do when they had assembled together, eager for battle, on the holy plain of Kurukshetra?\",\n  \"meaning\": \"Dhritarashtra asks Sanjaya about the events that took place on the battlefield of Kurukshetra when both armies were assembled and ready for war.\",\n  \"commentary\": \"This verse sets the stage for the entire Bhagavad Gita, as Dhritarashtra inquires about the events that led to the great discourse between Krishna and Arjuna.\",\n  \"tags\": [\"opening\", \"battlefield\", \"inquiry\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/verses",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses"]
+        },
+        "description": "Create a new verse with all required fields"
+      }
+    },
+    {
+      "name": "Update Verse (Full Update)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chapter\": 1,\n  \"verse\": 1,\n  \"sanskrit\": \"धृतराष्ट्र उवाच | धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः | मामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय ||\",\n  \"transliteration\": \"dhṛtarāṣṭra uvāca dharma-kṣetre kuru-kṣetre samavetā yuyutsavaḥ māmakāḥ pāṇḍavāś caiva kim akurvata sañjaya\",\n  \"translation\": \"Dhritarashtra said: O Sanjaya, what did my sons and the sons of Pandu do when they had assembled together, eager for battle, on the holy plain of Kurukshetra?\",\n  \"meaning\": \"Dhritarashtra asks Sanjaya about the events that took place on the battlefield of Kurukshetra when both armies were assembled and ready for war.\",\n  \"commentary\": \"This verse sets the stage for the entire Bhagavad Gita, as Dhritarashtra inquires about the events that led to the great discourse between Krishna and Arjuna.\",\n  \"tags\": [\"opening\", \"battlefield\", \"inquiry\", \"updated\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/{{verseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "{{verseId}}"]
+        },
+        "description": "Update an existing verse with complete data replacement"
+      }
+    },
+    {
+      "name": "Update Verse (Partial Update)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"commentary\": \"Updated commentary for this verse\",\n  \"tags\": [\"opening\", \"battlefield\", \"inquiry\", \"partial-update\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/{{verseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "{{verseId}}"]
+        },
+        "description": "Partially update specific fields of an existing verse"
+      }
+    },
+    {
+      "name": "Soft Delete Verse",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/{{verseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "{{verseId}}"]
+        },
+        "description": "Soft delete a verse (sets isActive to false)"
+      }
+    },
+    {
+      "name": "Permanent Delete Verse",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/{{verseId}}/permanent",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "{{verseId}}", "permanent"]
+        },
+        "description": "Permanently delete a verse from the database"
+      }
+    },
+    {
+      "name": "Get Statistics Overview",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/verses/stats/overview",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "verses", "stats", "overview"]
+        },
+        "description": "Get comprehensive statistics about verses and chapters"
+      }
+    }
+  ]
+}

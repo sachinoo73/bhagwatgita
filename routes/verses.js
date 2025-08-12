@@ -75,6 +75,27 @@ router.get('/chapter/:chapter', async (req, res) => {
   }
 });
 
+// GET verse by chapter and verse number with full commentaries
+router.get('/:chapter/:verse/full', async (req, res) => {
+  try {
+    const chapter = parseInt(req.params.chapter);
+    const verse = parseInt(req.params.verse);
+    
+    const verseDoc = await Verse.findOne({ chapter, verse, isActive: true });
+    if (!verseDoc) {
+      return res.status(404).json({ message: 'Verse not found' });
+    }
+    
+    // Return the full verse with all commentary data
+    res.json({
+      ...verseDoc.toObject(),
+      message: 'Full verse data with commentaries retrieved successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching verse', error: error.message });
+  }
+});
+
 // GET verse by chapter and verse number
 router.get('/:chapter/:verse', async (req, res) => {
   try {
@@ -85,7 +106,24 @@ router.get('/:chapter/:verse', async (req, res) => {
     if (!verseDoc) {
       return res.status(404).json({ message: 'Verse not found' });
     }
-    res.json(verseDoc);
+    
+    // Return simplified verse data (without full commentaries)
+    const simplifiedVerse = {
+      _id: verseDoc._id,
+      chapter: verseDoc.chapter,
+      verse: verseDoc.verse,
+      reference: verseDoc.reference,
+      sanskrit: verseDoc.sanskrit,
+      transliteration: verseDoc.transliteration,
+      translation: verseDoc.translation,
+      meaning: verseDoc.meaning,
+      commentary: verseDoc.commentary,
+      tags: verseDoc.tags,
+      createdAt: verseDoc.createdAt,
+      updatedAt: verseDoc.updatedAt
+    };
+    
+    res.json(simplifiedVerse);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching verse', error: error.message });
   }
