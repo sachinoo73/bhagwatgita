@@ -7,8 +7,8 @@ router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, chapter, search, tags } = req.query;
     
-    // Build filter object
-    const filter = { isActive: true };
+    // Build filter object - temporarily remove isActive filter
+    const filter = {};
     if (chapter) filter.chapter = parseInt(chapter);
     if (search) {
       filter.$or = [
@@ -27,12 +27,19 @@ router.get('/', async (req, res) => {
       sort: { chapter: 1, verse: 1 }
     };
 
+    // Debug: Log the filter and model info
+    console.log('Filter:', JSON.stringify(filter));
+    console.log('Verse model:', Verse.modelName);
+    console.log('Collection name:', Verse.collection.name);
+
     const verses = await Verse.find(filter)
       .sort(options.sort)
       .limit(options.limit)
       .skip((options.page - 1) * options.limit);
 
     const total = await Verse.countDocuments(filter);
+
+    console.log(`Found ${verses.length} verses, total: ${total}`);
 
     res.json({
       verses,
@@ -44,6 +51,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in GET /:', error);
     res.status(500).json({ message: 'Error fetching verses', error: error.message });
   }
 });
@@ -69,7 +77,8 @@ router.get('/chapter/:chapter', async (req, res) => {
       return res.status(400).json({ message: 'Chapter number must be between 1 and 18' });
     }
     
-    const verses = await Verse.findByChapter(chapter);
+    // Temporarily remove isActive filter
+    const verses = await Verse.find({ chapter }).sort({ verse: 1 });
     res.json({ chapter, verses, count: verses.length });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching chapter verses', error: error.message });
@@ -82,7 +91,8 @@ router.get('/:chapter/:verse', async (req, res) => {
     const chapter = parseInt(req.params.chapter);
     const verse = parseInt(req.params.verse);
     
-    const verseDoc = await Verse.findOne({ chapter, verse, isActive: true });
+    // Temporarily remove isActive filter
+    const verseDoc = await Verse.findOne({ chapter, verse });
     if (!verseDoc) {
       return res.status(404).json({ message: 'Verse not found' });
     }
@@ -116,7 +126,8 @@ router.get('/:chapter/:verse/full', async (req, res) => {
     const chapter = parseInt(req.params.chapter);
     const verse = parseInt(req.params.verse);
     
-    const verseDoc = await Verse.findOne({ chapter, verse, isActive: true });
+    // Temporarily remove isActive filter
+    const verseDoc = await Verse.findOne({ chapter, verse });
     if (!verseDoc) {
       return res.status(404).json({ message: 'Verse not found' });
     }
@@ -265,8 +276,8 @@ router.delete('/:id/permanent', async (req, res) => {
 // GET statistics
 router.get('/stats/overview', async (req, res) => {
   try {
+    // Temporarily remove isActive filter
     const stats = await Verse.aggregate([
-      { $match: { isActive: true } },
       {
         $group: {
           _id: '$chapter',
@@ -276,7 +287,8 @@ router.get('/stats/overview', async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
     
-    const totalVerses = await Verse.countDocuments({ isActive: true });
+    // Temporarily remove isActive filter
+    const totalVerses = await Verse.countDocuments({});
     const totalChapters = stats.length;
     
     res.json({
@@ -286,6 +298,50 @@ router.get('/stats/overview', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching statistics', error: error.message });
+  }
+});
+
+// Debug endpoint to check database connection and collections
+router.get('/debug/database', async (req, res) => {
+  try {
+    const db = Verse.db;
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map(col => col.name);
+    
+    // Try to get a sample document from each collection
+    const sampleDocs = {};
+    for (const collectionName of collectionNames) {
+      try {
+        const sample = await db.collection(collectionName).findOne({});
+        sampleDocs[collectionName] = {
+          exists: true,
+          sampleKeys: sample ? Object.keys(sample) : [],
+          sampleCount: await db.collection(collectionName).countDocuments()
+        };
+      } catch (err) {
+        sampleDocs[collectionName] = {
+          exists: false,
+          error: err.message
+        };
+      }
+    }
+    
+    res.json({
+      database: db.databaseName,
+      collections: collectionNames,
+      sampleDocs,
+      verseModel: {
+        modelName: Verse.modelName,
+        collectionName: Verse.collection.name,
+        schemaFields: Object.keys(Verse.schema.paths)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error checking database', 
+      error: error.message,
+      stack: error.stack
+    });
   }
 });
 

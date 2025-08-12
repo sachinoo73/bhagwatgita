@@ -198,4 +198,18 @@ verseSchema.methods.getSummary = function() {
   };
 };
 
-module.exports = mongoose.model('Verse', verseSchema, 'slok');
+// Try to connect to the slok collection, but be flexible
+let Verse;
+try {
+  Verse = mongoose.model('Verse', verseSchema, 'slok');
+} catch (error) {
+  // If slok collection doesn't exist, try without specifying collection name
+  try {
+    Verse = mongoose.model('Verse', verseSchema);
+  } catch (err) {
+    // If that fails, create a new model
+    Verse = mongoose.model('Verse', verseSchema);
+  }
+}
+
+module.exports = Verse;
