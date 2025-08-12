@@ -10,13 +10,14 @@ router.get('/', async (req, res) => {
     // Build filter object
     const filter = { isActive: true };
     if (chapter) filter.chapter = parseInt(chapter);
-    if (tags) filter.tags = { $in: tags.split(',') };
     if (search) {
       filter.$or = [
-        { sanskrit: { $regex: search, $options: 'i' } },
+        { slok: { $regex: search, $options: 'i' } },
         { transliteration: { $regex: search, $options: 'i' } },
-        { translation: { $regex: search, $options: 'i' } },
-        { meaning: { $regex: search, $options: 'i' } }
+        { 'tej.et': { $regex: search, $options: 'i' } },
+        { 'siva.et': { $regex: search, $options: 'i' } },
+        { 'tej.ht': { $regex: search, $options: 'i' } },
+        { 'siva.ec': { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -75,6 +76,40 @@ router.get('/chapter/:chapter', async (req, res) => {
   }
 });
 
+// GET verse by chapter and verse number
+router.get('/:chapter/:verse', async (req, res) => {
+  try {
+    const chapter = parseInt(req.params.chapter);
+    const verse = parseInt(req.params.verse);
+    
+    const verseDoc = await Verse.findOne({ chapter, verse, isActive: true });
+    if (!verseDoc) {
+      return res.status(404).json({ message: 'Verse not found' });
+    }
+    
+    // Return simplified verse data with virtual fields
+    const simplifiedVerse = {
+      _id: verseDoc._id,
+      id: verseDoc.id,
+      chapter: verseDoc.chapter,
+      verse: verseDoc.verse,
+      reference: verseDoc.reference,
+      sanskrit: verseDoc.sanskrit, // Virtual field
+      transliteration: verseDoc.transliteration,
+      translation: verseDoc.translation, // Virtual field
+      meaning: verseDoc.meaning, // Virtual field
+      commentary: verseDoc.commentary, // Virtual field
+      tags: [`chapter-${verseDoc.chapter}`, `verse-${verseDoc.verse}`],
+      createdAt: verseDoc.createdAt,
+      updatedAt: verseDoc.updatedAt
+    };
+    
+    res.json(simplifiedVerse);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching verse', error: error.message });
+  }
+});
+
 // GET verse by chapter and verse number with full commentaries
 router.get('/:chapter/:verse/full', async (req, res) => {
   try {
@@ -91,39 +126,6 @@ router.get('/:chapter/:verse/full', async (req, res) => {
       ...verseDoc.toObject(),
       message: 'Full verse data with commentaries retrieved successfully'
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching verse', error: error.message });
-  }
-});
-
-// GET verse by chapter and verse number
-router.get('/:chapter/:verse', async (req, res) => {
-  try {
-    const chapter = parseInt(req.params.chapter);
-    const verse = parseInt(req.params.verse);
-    
-    const verseDoc = await Verse.findOne({ chapter, verse, isActive: true });
-    if (!verseDoc) {
-      return res.status(404).json({ message: 'Verse not found' });
-    }
-    
-    // Return simplified verse data (without full commentaries)
-    const simplifiedVerse = {
-      _id: verseDoc._id,
-      chapter: verseDoc.chapter,
-      verse: verseDoc.verse,
-      reference: verseDoc.reference,
-      sanskrit: verseDoc.sanskrit,
-      transliteration: verseDoc.transliteration,
-      translation: verseDoc.translation,
-      meaning: verseDoc.meaning,
-      commentary: verseDoc.commentary,
-      tags: verseDoc.tags,
-      createdAt: verseDoc.createdAt,
-      updatedAt: verseDoc.updatedAt
-    };
-    
-    res.json(simplifiedVerse);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching verse', error: error.message });
   }
@@ -241,7 +243,11 @@ router.delete('/:id', async (req, res) => {
 // DELETE verse permanently (hard delete)
 router.delete('/:id/permanent', async (req, res) => {
   try {
-    const verse = await Verse.findByIdAndDelete(req.params.id);
+    const verse = await Verse.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
     
     if (!verse) {
       return res.status(404).json({ message: 'Verse not found' });
@@ -264,8 +270,7 @@ router.get('/stats/overview', async (req, res) => {
       {
         $group: {
           _id: '$chapter',
-          verseCount: { $sum: 1 },
-          tags: { $addToSet: '$tags' }
+          verseCount: { $sum: 1 }
         }
       },
       { $sort: { _id: 1 } }

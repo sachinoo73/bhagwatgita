@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const verseSchema = new mongoose.Schema({
+  id: {
+    type: String,
+    required: true,
+    unique: true
+  },
   chapter: {
     type: Number,
     required: [true, 'Chapter number is required'],
@@ -12,9 +17,9 @@ const verseSchema = new mongoose.Schema({
     required: [true, 'Verse number is required'],
     min: [1, 'Verse number must be at least 1']
   },
-  sanskrit: {
+  slok: {
     type: String,
-    required: [true, 'Sanskrit text is required'],
+    required: [true, 'Sanskrit text (slok) is required'],
     trim: true
   },
   transliteration: {
@@ -22,52 +27,106 @@ const verseSchema = new mongoose.Schema({
     required: [true, 'Transliteration is required'],
     trim: true
   },
-  translation: {
-    type: String,
-    required: [true, 'Translation is required'],
-    trim: true
+  // Multiple commentary objects
+  tej: {
+    author: String,
+    ht: String,  // Hindi translation
+    et: String   // English translation
   },
-  meaning: {
-    type: String,
-    required: [true, 'Meaning is required'],
-    trim: true
+  siva: {
+    author: String,
+    et: String,  // English translation
+    ec: String   // English commentary
   },
-  commentary: {
-    type: String,
-    trim: true
+  purohit: {
+    author: String,
+    et: String
   },
-  tags: [{
-    type: String,
-    trim: true
-  }],
+  chinmay: {
+    author: String,
+    hc: String
+  },
+  san: {
+    author: String,
+    et: String
+  },
+  adi: {
+    author: String,
+    et: String
+  },
+  gambir: {
+    author: String,
+    et: String
+  },
+  madhav: {
+    author: String,
+    sc: String
+  },
+  anand: {
+    author: String,
+    sc: String
+  },
+  rams: {
+    author: String,
+    ht: String,
+    hc: String
+  },
+  raman: {
+    author: String,
+    sc: String,
+    et: String
+  },
+  abhinav: {
+    author: String,
+    sc: String,
+    et: String
+  },
+  sankar: {
+    author: String,
+    ht: String,
+    sc: String,
+    et: String
+  },
+  jaya: {
+    author: String,
+    sc: String
+  },
+  vallabh: {
+    author: String,
+    sc: String
+  },
+  ms: {
+    author: String,
+    sc: String
+  },
+  srid: {
+    author: String,
+    sc: String
+  },
+  dhan: {
+    author: String,
+    sc: String
+  },
+  venkat: {
+    author: String,
+    sc: String
+  },
+  puru: {
+    author: String,
+    sc: String
+  },
+  neel: {
+    author: String,
+    sc: String
+  },
+  prabhu: {
+    author: String,
+    et: String,
+    ec: String
+  },
   isActive: {
     type: Boolean,
     default: true
-  },
-  // Store original commentaries for reference
-  commentaries: {
-    tej: Object,
-    siva: Object,
-    purohit: Object,
-    chinmay: Object,
-    san: Object,
-    adi: Object,
-    gambir: Object,
-    madhav: Object,
-    anand: Object,
-    rams: Object,
-    raman: Object,
-    abhinav: Object,
-    sankar: Object,
-    jaya: Object,
-    vallabh: Object,
-    ms: Object,
-    srid: Object,
-    dhan: Object,
-    venkat: Object,
-    puru: Object,
-    neel: Object,
-    prabhu: Object
   }
 }, {
   timestamps: true,
@@ -81,6 +140,35 @@ verseSchema.index({ chapter: 1, verse: 1 }, { unique: true });
 // Virtual for full reference
 verseSchema.virtual('reference').get(function() {
   return `${this.chapter}.${this.verse}`;
+});
+
+// Virtual for sanskrit (alias to slok for API compatibility)
+verseSchema.virtual('sanskrit').get(function() {
+  return this.slok;
+});
+
+// Virtual for translation (get first available English translation)
+verseSchema.virtual('translation').get(function() {
+  return this.tej?.et || this.siva?.et || this.purohit?.et || 
+         this.chinmay?.et || this.san?.et || this.adi?.et || 
+         this.gambir?.et || this.rams?.et || this.raman?.et || 
+         this.abhinav?.et || this.sankar?.et || this.prabhu?.et || 
+         'Translation not available';
+});
+
+// Virtual for meaning (get first available Hindi translation/commentary)
+verseSchema.virtual('meaning').get(function() {
+  return this.tej?.ht || this.siva?.ec || this.chinmay?.hc || 
+         this.rams?.ht || this.sankar?.ht || 'Meaning not available';
+});
+
+// Virtual for commentary (get first available Sanskrit commentary)
+verseSchema.virtual('commentary').get(function() {
+  return this.sankar?.sc || this.anand?.sc || this.rams?.hc || 
+         this.raman?.sc || this.abhinav?.sc || this.jaya?.sc || 
+         this.vallabh?.sc || this.ms?.sc || this.srid?.sc || 
+         this.dhan?.sc || this.venkat?.sc || this.puru?.sc || 
+         this.neel?.sc || 'Commentary not available';
 });
 
 // Pre-save middleware to validate chapter-verse combination
@@ -106,8 +194,8 @@ verseSchema.methods.getSummary = function() {
     reference: this.reference,
     sanskrit: this.sanskrit,
     translation: this.translation,
-    tags: this.tags
+    tags: [`chapter-${this.chapter}`, `verse-${this.verse}`]
   };
 };
 
-module.exports = mongoose.model('Verse', verseSchema);
+module.exports = mongoose.model('Verse', verseSchema, 'slok');
